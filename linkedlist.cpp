@@ -1,5 +1,7 @@
 ﻿#include "pch.h"
 #include <iostream>
+#include <string>
+#include <time.h>
 
 using namespace std;
 
@@ -15,22 +17,6 @@ public:
 		}
 	};
 
-	/*List* operator [](int n) const {
-		node* ptr = head;
-		int i = 0;
-		while (ptr && i < n) {
-			ptr = ptr->next;
-			i++;
-			cout << "test" << endl;
-		}
-		if (ptr) {
-			return ptr;
-		}
-		else {
-			cout << "Indeks poza zakresem" << endl;
-		}
-	}*/
-
 	List() {
 		size = 0;
 		head = nullptr;
@@ -39,8 +25,10 @@ public:
 
 	~List() {}
 
-
-
+	int get_size() {
+		return size;
+	}
+	
 	void new_node_back(const T& dane) {
 		node* n = new node;
 		n->dane = dane;
@@ -75,6 +63,54 @@ public:
 		size++;
 	}
 
+	void new_node_ordered(const T& dane) {
+
+		
+		node* n = new node;
+		n->dane = dane;
+		if (head == nullptr) {
+			n->next = nullptr;
+			n->prev = nullptr;
+			head = n;
+			tail = n;
+			size++;
+			return;
+		}
+
+		if (dane < head->dane) {
+			new_node_front(dane);
+			return;
+		}
+		else if (tail->dane < dane || tail->dane == dane) {
+			new_node_back(dane);
+			return;
+		}
+
+
+		node* ptr = head;
+		while (ptr) {
+			if (ptr->dane < dane && dane < ptr->next->dane) {
+				n->prev = ptr;
+				n->next = ptr->next;
+				ptr->next->prev = n;
+				ptr->next = n;
+				size++;
+				return;
+			}
+			else if (ptr->dane == dane) {
+				n->prev = ptr;
+				n->next = ptr->next;
+				ptr->next->prev = n;
+				ptr->next = n;
+				size++;
+				return;
+			}
+
+			ptr = ptr->next;
+		}
+
+	}
+
 	void delete_last() {
 		if (size == 0) {
 			cout << "Brak elementow do usuniecia" << endl;
@@ -87,7 +123,7 @@ public:
 			node* temp = tail;
 			tail = temp->prev;
 			tail->next = nullptr;
-			delete(temp);
+			delete temp;
 			size--;
 		}
 	}
@@ -104,22 +140,11 @@ public:
 			node* temp = head;
 			head = temp->next;
 			head->prev = nullptr;
-			delete(temp);
+			delete temp;
 			size--;
 		}
 	}
 
-	T find_element(int n) {
-		node* ptr = head;
-		int i = 0;
-		while (ptr && i < n) {
-			ptr = ptr->next;
-			i++;
-		}
-		if (ptr) {
-			return ptr->dane;
-		}
-	}
 	node* find_node(const T& key) {
 		node* ptr = head;
 		while (ptr) {
@@ -133,6 +158,30 @@ public:
 		cout << "No such element" << endl;
 	}
 
+	T find_element(int n) {
+		node* ptr;
+		if (size / 2 > n) {
+			ptr = head;
+			int i = 0;
+			while (ptr && i < n) {
+				ptr = ptr->next;
+				i++;
+			}
+		}
+		else {
+			ptr = tail;
+			int i = size - 1;
+			while (ptr && i > n) {
+				ptr = ptr->prev;
+				i--;
+			}
+		}
+		
+		if (ptr) {
+			return ptr->dane;
+		}
+	}
+
 	bool find_and_delete(const T& key) {
 
 		node* ptr = head;
@@ -140,15 +189,18 @@ public:
 			if ((ptr->dane == key)) {
 				if (ptr == head) {
 					this->delete_first();
+
 					return 1;
 				}
 				else if (ptr == tail) {
 					this->delete_last();
+
 					return 1;
 				}
 				else {
 					ptr->prev->next = ptr->next;
 					ptr->next->prev = ptr->prev;
+					size--;
 					return 1;
 				}
 
@@ -195,18 +247,27 @@ public:
 
 	}
 
-	void display_list() {
+	string display_list(int n = 0) {
 		node* ptr = head;
-		while (ptr) {
-			cout << ptr->dane << endl;
+		int i = 0;
+		string output = "";
+		if (!n) {
+			n = size;
+		}
+		while (ptr && i < n) {
+			//cout << "Node: " << i << ", ADDR: " << ptr << endl;
+			//cout << ptr->dane << endl;
+			output = output + "Node: " + to_string(i) + "\n" + ptr->dane.convert_to_str() +"\n \n";
+			i++;
 			ptr = ptr->next;
 		}
+		return output;
 	}
 
 
 private:
 	node* head, * tail;
-	unsigned size;
+	unsigned int size;
 };
 
 
@@ -215,17 +276,16 @@ private:
 struct listData {
 	int d1;
 	char d2;
-	listData() {
-		d1 = 1;
-		d2 = 'a';
-	}
 
+	string convert_to_str() {
+		return "{d1: " + to_string(d1) + "\nd2: " + d2 + "}";
+	}
 };
 
-ostream& operator << (ostream& out, const listData& obj) {
-	out << "{d1: " << obj.d1 << endl << "d2: " << obj.d2 << "}";
-	return out;
-}
+//ostream& operator << (ostream& out, const listData& obj) {
+//	out << "{d1: " << obj.d1 << endl << "d2: " << obj.d2 << "}";
+//	return out;
+//}
 
 bool operator < (const listData& a, const listData& b) {
 	return a.d1 < b.d1 || a.d1 == b.d1 && a.d2 < b.d2;
@@ -240,107 +300,49 @@ bool operator ==(const listData& a, const listData& b) {
 
 int main()
 {
+	const int MAX_ORDER = 7;
 	List<listData>* lista = new List<listData>();
-	listData* test = new listData();
-	listData* test2 = new listData();
-	/*cout << "----------------------------" << endl;*/
-	//lista->delete_first();
-	lista->new_node_back(*test);
-	test->d1 = 2;
-	test->d2 = 'b';
-	lista->new_node_front(*test);
-	test->d1 = 3;
-	test->d2 = 'c';
-	lista->new_node_back(*test);
-	test->d1 = 4;
-	test->d2 = 'd';
-	lista->new_node_back(*test);
-	cout << "----------------------------" << endl;
-	test2->d1 = 4;
-	test2->d2 = 'd';
-	cout << lista->find_node(*test2) << endl;
-	cout << "----------------------------" << endl;
-	lista->display_list();
-	cout << "----------------------------" << endl;
-	test2->d1 = 1;
-	test2->d2 = 'a';
-	cout << lista->find_and_delete(*test2) << endl;
-	cout << "----------------------------" << endl;
-	lista->display_list();
-	cout << "----------------------------" << endl;
+	listData* data = new listData();
 
-	lista->new_node_back(*test);
-	test->d1 = 2;
-	test->d2 = 'b';
-	lista->new_node_front(*test);
-	lista->display_list();
-	cout << "----------------------------" << endl;
-	lista->delete_last();
-	lista->display_list();
-	cout << "----------------------------" << endl;
-	test->d1 = 10;
-	test->d2 = 'g';
-	lista->swap_element(0, *test);
-	lista->display_list();
+	srand(time(NULL));
+	for (int o = 1; o <= MAX_ORDER; o++) {
+		
+		const int n = pow(10, o);
 
-	lista->delete_first();
-	lista->display_list();
-	cout << "----------------------------" << endl;
-	cout << lista->find_element(0) << endl;
-	cout << "----------------------------" << endl;
-	lista->delete_all();
-	lista->display_list();
-	cout << "----------------------------" << endl;
+		clock_t t1 = clock();
+		for (int i = 0; i < n; i++) {
+			data->d1 = rand() % 1000000;
+			data->d2 = 'a' + rand() % 26;
+			lista->new_node_back(*data);
+		}
+		clock_t t2 = clock();
 
+		double time = (t2 - t1) / (double)CLOCKS_PER_SEC;
+		cout << "============================================================" << endl;
+		cout << "Rozmiar listy: " << lista->get_size() << endl;
+		cout << "Dodawanie czas calkowity: " << time << endl;
+		cout << "Dodawanie czas sredni na pojedyncza operacje: " << time / n << endl;
+		
+
+		const int m = pow(10, 4);
+
+		t1 = clock();
+		for (int i = 0; i < m; i++) {
+			data->d1 = rand() % 1000000;
+			data->d2 = 'a' + rand() % 26;
+			lista->find_and_delete(*data);
+		}
+		t2 = clock();
+		time = (t2 - t1) / (double)CLOCKS_PER_SEC;
+		cout << "------------------------------------------------------------" << endl;
+		cout << "Rozmiar listy: " << lista->get_size() << endl;
+		cout << "Usuwanie czas całkowity: " << time << endl;
+		cout << "Usuwanie czas sredni na pojedyncza operacje: " << time / m << endl;
+		cout << "============================================================" << "\n\n\n";
+
+		lista->delete_all();
+	}
 
 	delete lista;
-	delete test;
+	delete data;
 }
-
-
-
-
-
-
-
-
-
-
-
-/*
-	struct some_object{
-		int field_1;
-		char field_2;
-		bool operator ==(const some_object& o) const {return field_1 == o.field_1 && field_2 == o.field_2;}
-	};
-
-	std::ostream & operator << (std::ostream& out, const some_object& obj){
-	out << "{field_1: << obj.field_1 << ... ;
-	return out;
-	}
-
-	#include<sstream>
-	std::ostringstream out;
-
-	out << head->dane
-
-	return out.str();
-
-
-
-	bool operator < (const some_object& a, const some_object& b){
-		return a.field_1 < b.field_1 || a.field_1 == b.field1 && a.field_2 < b.field_2;
-	}
-
-
-	for(auto i = head; i; i = i-> nast){
-
-	}
-
-	auto ptr = tail;
-	while(ptr){
-	...
-	ptr = ptr->poprz;
-	}
-
-*/
