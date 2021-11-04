@@ -1,16 +1,22 @@
-﻿#include "pch.h"
+﻿// ALGO2 IS1 222B LAB01
+// Aleksander Wojciechowski
+// wa49444@zut.edu.pl
+
+#include "pch.h"
 #include <iostream>
 #include <string>
 #include <time.h>
+#include <sstream>
 
 using namespace std;
 
 template <typename T>
+
 class List {
 public:
 	struct node {
 		T dane;
-		node* next, * prev;
+		node* next, *prev;
 		node() {
 			next = nullptr;
 			prev = nullptr;
@@ -23,12 +29,14 @@ public:
 		tail = nullptr;
 	}
 
-	~List() {}
+	~List() {
+		delete_all();
+	}
 
 	int get_size() {
 		return size;
 	}
-	
+
 	void new_node_back(const T& dane) {
 		node* n = new node;
 		n->dane = dane;
@@ -65,7 +73,6 @@ public:
 
 	void new_node_ordered(const T& dane) {
 
-		
 		node* n = new node;
 		n->dane = dane;
 		if (head == nullptr) {
@@ -116,8 +123,9 @@ public:
 			cout << "Brak elementow do usuniecia" << endl;
 		}
 		else if (size == 1) {
-			head = tail = nullptr;
-			size--;
+			delete_all();
+			/*head = tail = nullptr;
+			size--;*/
 		}
 		else {
 			node* temp = tail;
@@ -133,8 +141,7 @@ public:
 			cout << "Brak elementow do usuniecia" << endl;
 		}
 		else if (size == 1) {
-			head = tail = nullptr;
-			size--;
+			delete_all();
 		}
 		else {
 			node* temp = head;
@@ -155,7 +162,7 @@ public:
 				ptr = ptr->next;
 			}
 		}
-		cout << "No such element" << endl;
+		return nullptr;
 	}
 
 	T find_element(int n) {
@@ -176,10 +183,12 @@ public:
 				i--;
 			}
 		}
-		
-		if (ptr) {
-			return ptr->dane;
+
+		if (!ptr) {
+			abort();
 		}
+
+		return ptr->dane;
 	}
 
 	bool find_and_delete(const T& key) {
@@ -194,12 +203,13 @@ public:
 				}
 				else if (ptr == tail) {
 					this->delete_last();
-
 					return 1;
 				}
 				else {
+					
 					ptr->prev->next = ptr->next;
 					ptr->next->prev = ptr->prev;
+					delete ptr;
 					size--;
 					return 1;
 				}
@@ -230,14 +240,14 @@ public:
 			cout << "Lista pusta" << endl;
 		}
 		else if (size == 1) {
-			head = tail = nullptr;
+			delete head;
 			size--;
 		}
 		else {
 			node* tmp = head;
 			while (tmp) {
 				tmp = tmp->next;
-				head = nullptr;
+				delete head;
 				head = tmp;
 				size--;
 			}
@@ -250,23 +260,23 @@ public:
 	string display_list(int n = 0) {
 		node* ptr = head;
 		int i = 0;
-		string output = "";
+		ostringstream output = "";
 		if (!n) {
 			n = size;
 		}
 		while (ptr && i < n) {
-			//cout << "Node: " << i << ", ADDR: " << ptr << endl;
-			//cout << ptr->dane << endl;
-			output = output + "Node: " + to_string(i) + "\n" + ptr->dane.convert_to_str() +"\n \n";
+			output << "Node: " << i << ", ADDR: " << ptr << endl;
+			output << ptr->dane << endl;
+			//output = output + "Node: " + to_string(i) + "\n" + ptr->dane.convert_to_str() + "\n \n";
 			i++;
 			ptr = ptr->next;
 		}
-		return output;
+		return output.str();
 	}
 
 
 private:
-	node* head, * tail;
+	node* head, *tail;
 	unsigned int size;
 };
 
@@ -276,16 +286,12 @@ private:
 struct listData {
 	int d1;
 	char d2;
-
-	string convert_to_str() {
-		return "{d1: " + to_string(d1) + "\nd2: " + d2 + "}";
-	}
 };
 
-//ostream& operator << (ostream& out, const listData& obj) {
-//	out << "{d1: " << obj.d1 << endl << "d2: " << obj.d2 << "}";
-//	return out;
-//}
+ostream& operator << (ostream& out, const listData& obj) {
+	out << "{d1: " << obj.d1 << endl << "d2: " << obj.d2 << "}";
+	return out;
+}
 
 bool operator < (const listData& a, const listData& b) {
 	return a.d1 < b.d1 || a.d1 == b.d1 && a.d2 < b.d2;
@@ -300,20 +306,20 @@ bool operator ==(const listData& a, const listData& b) {
 
 int main()
 {
-	const int MAX_ORDER = 7;
+	const int MAX_ORDER = 4;
 	List<listData>* lista = new List<listData>();
 	listData* data = new listData();
 
 	srand(time(NULL));
 	for (int o = 1; o <= MAX_ORDER; o++) {
-		
+
 		const int n = pow(10, o);
 
 		clock_t t1 = clock();
 		for (int i = 0; i < n; i++) {
-			data->d1 = rand() % 1000000;
+			data->d1 = rand() % 1000;
 			data->d2 = 'a' + rand() % 26;
-			lista->new_node_back(*data);
+			lista->new_node_ordered(*data);
 		}
 		clock_t t2 = clock();
 
@@ -322,13 +328,13 @@ int main()
 		cout << "Rozmiar listy: " << lista->get_size() << endl;
 		cout << "Dodawanie czas calkowity: " << time << endl;
 		cout << "Dodawanie czas sredni na pojedyncza operacje: " << time / n << endl;
-		
+
 
 		const int m = pow(10, 4);
 
 		t1 = clock();
 		for (int i = 0; i < m; i++) {
-			data->d1 = rand() % 1000000;
+			data->d1 = rand() % 1000;
 			data->d2 = 'a' + rand() % 26;
 			lista->find_and_delete(*data);
 		}
@@ -336,7 +342,7 @@ int main()
 		time = (t2 - t1) / (double)CLOCKS_PER_SEC;
 		cout << "------------------------------------------------------------" << endl;
 		cout << "Rozmiar listy: " << lista->get_size() << endl;
-		cout << "Usuwanie czas całkowity: " << time << endl;
+		cout << "Usuwanie czas calkowity: " << time << endl;
 		cout << "Usuwanie czas sredni na pojedyncza operacje: " << time / m << endl;
 		cout << "============================================================" << "\n\n\n";
 
